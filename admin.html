@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin • Configurações do Site</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="header">
+  <nav class="nav container">
+    <a href="index.html" class="logo">Voltar</a>
+    <strong>Administração do Site</strong>
+  </nav>
+</header>
+<main class="section">
+  <div class="container">
+    <h2 class="section-title">Configurações</h2>
+    <div class="grid-2">
+      <section class="form">
+        <h3>Paleta de Cores</h3>
+        <div class="form-group"><label for="color-navy">Azul-marinho</label><input id="color-navy" type="color" value="#0B1B3F"></div>
+        <div class="form-group"><label for="color-gold">Dourado</label><input id="color-gold" type="color" value="#C9A227"></div>
+        <div class="form-group"><label for="color-white">Branco</label><input id="color-white" type="color" value="#ffffff"></div>
+        <div class="form-group"><label for="color-red">Vermelho discreto</label><input id="color-red" type="color" value="#B22234"></div>
+      </section>
+      <section class="form">
+        <h3>Fotos</h3>
+        <div class="form-group"><label for="hero-photo">Foto do herói (Padre)</label><input id="hero-photo" type="file" accept="image/*"></div>
+        <div class="form-group"><label for="gallery-photos">Galeria (múltiplas)</label><input id="gallery-photos" type="file" multiple accept="image/*"></div>
+      </section>
+    </div>
+    <section class="form" style="margin-top:16px">
+      <h3>Chat de IA</h3>
+      <div class="form-group inline"><input id="chat-enabled" type="checkbox"><label for="chat-enabled">Ativar chat flutuante</label></div>
+    </section>
+    <section class="form" style="margin-top:16px">
+      <h3>Segurança</h3>
+      <div class="form-group"><label for="sec-current">Senha atual</label><input id="sec-current" type="password"></div>
+      <div class="form-group"><label for="sec-new">Nova senha</label><input id="sec-new" type="password"></div>
+      <div class="form-group"><label for="sec-confirm">Confirmar nova senha</label><input id="sec-confirm" type="password"></div>
+      <button id="sec-save" class="btn btn-outline">Atualizar senha</button>
+      <p id="sec-status" class="form-status"></p>
+    </section>
+    <div style="margin-top:16px">
+      <button id="save-settings" class="btn btn-gold">Salvar configurações</button>
+      <button id="clear-settings" class="btn btn-outline">Limpar configurações</button>
+      <p id="admin-status" class="form-status"></p>
+    </div>
+  </div>
+</main>
+<script src="assets/admin.js"></script>
+</body>
+</html>
