@@ -2,7 +2,7 @@ const $=s=>document.querySelector(s)
 const $$=s=>document.querySelectorAll(s)
 const guard=()=>{try{const a=JSON.parse(localStorage.getItem('adminAuth')||'null');if(!a||Date.now()>a.expires){location.href='login.html?redirect=admin.html'}}catch{location.href='login.html?redirect=admin.html'}}
 guard()
-const bootstrapConn=()=>{const api=localStorage.getItem('API_BASE');const tok=localStorage.getItem('ADMIN_TOKEN');if(!api||api.trim()===''){const host=location.hostname;const isLocal=/localhost|127\.0\.0\.1/.test(host);localStorage.setItem('API_BASE',isLocal?'http://127.0.0.1:4000':'')};if(!tok||tok.trim()==='')localStorage.setItem('ADMIN_TOKEN','padre-admin-local')}
+const bootstrapConn=()=>{const api=localStorage.getItem('API_BASE');const tok=localStorage.getItem('ADMIN_TOKEN');if(!api||api.trim()===''){const host=location.hostname;const isLocal=/localhost|127\.0\.0\.1/.test(host);localStorage.setItem('API_BASE',isLocal?'http://127.0.0.1:4000':'https://backend-sitepadrekelmon.vercel.app')};if(!tok||tok.trim()==='')localStorage.setItem('ADMIN_TOKEN','padre-admin-local')}
 bootstrapConn()
 const fileToDataURL=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)})
 const defaultSettings={palette:{navy:'#0B1B3F',gold:'#C9A227',white:'#ffffff',red:'#B22234'},heroPhoto:'',gallery:[],chat:{enabled:true}}
