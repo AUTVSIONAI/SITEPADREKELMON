@@ -30,6 +30,7 @@
           <a class="admin-link" href="#sec-texts">Textos</a>
           <a class="admin-link" href="#sec-posts">Posts</a>
           <a class="admin-link" href="#sec-events">Agenda</a>
+          <a class="admin-link" href="#sec-forms">Formulários</a>
           <a class="admin-link" href="#sec-llm">Chat LLM</a>
           <a class="admin-link" href="#sec-llm-free">Modelos LLM</a>
           <a class="admin-link" href="#sec-llm-test">Teste LLM</a>
@@ -55,6 +56,21 @@
     <section id="sec-llm-toggle" class="form" style="margin-top:16px">
       <h3>Chat de IA</h3>
       <div class="form-group inline"><input id="chat-enabled" type="checkbox"><label for="chat-enabled">Ativar chat flutuante</label></div>
+    </section>
+    <section id="sec-forms" class="form" style="margin-top:16px">
+      <h3>Formulários</h3>
+      <div class="grid-2">
+        <div>
+          <h4>Voluntários</h4>
+          <div id="volunteers-list" class="news"></div>
+          <p id="volunteers-status" class="form-status"></p>
+        </div>
+        <div>
+          <h4>Contatos</h4>
+          <div id="contacts-list" class="news"></div>
+          <p id="contacts-status" class="form-status"></p>
+        </div>
+      </div>
     </section>
     <section id="sec-security" class="form" style="margin-top:16px">
       <h3>Segurança</h3>
@@ -96,9 +112,17 @@
           <div class="form-group"><label for="gal-pos">Posição</label><input id="gal-pos" type="number" value="0"></div>
           <button id="gal-add" class="btn btn-gold">Adicionar à galeria</button>
           <p id="gal-status" class="form-status"></p>
+          <div class="filters" style="margin-top:8px"><button class="filter-btn" data-gal-filter="all">Todos</button><button class="filter-btn" data-gal-filter="encontros">Encontros</button><button class="filter-btn" data-gal-filter="eventos">Eventos</button><button class="filter-btn" data-gal-filter="acoes">Ações</button><button class="filter-btn" data-gal-filter="oficiais">Oficiais</button></div>
         </div>
         <div>
           <div id="gal-list" class="gallery"></div>
+          <div id="gal-detail" class="form" style="margin-top:8px"></div>
+          <div id="gal-trash" class="form" style="margin-top:8px;border:2px dashed #cbd5e1;border-radius:12px;padding:18px;text-align:center;color:#6b7280">
+            Arraste a foto aqui para excluir da galeria
+          </div>
+          <div id="gal-trash-media" class="form" style="margin-top:8px;border:2px dashed #e11d48;border-radius:12px;padding:18px;text-align:center;color:#b91c1c">
+            Arraste a foto aqui para excluir a MÍDIA (imagem)
+          </div>
         </div>
       </div>
     </section>

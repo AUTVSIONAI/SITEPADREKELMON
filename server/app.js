@@ -7,12 +7,14 @@ import { supabase } from "./supabase.js"
 import { adminAuth } from "./middleware/auth.js"
 import { validateEmail, requireFields } from "./utils/validation.js"
 import { chatWithFreeModels, getApiFreeModels } from "./llm/dispatcher.js"
+import path from "path"
+import { fileURLToPath } from "url"
 
 const sessions=new Map()
 const app=express()
 const FRONT_ORIGIN=process.env.FRONT_ORIGIN||'https://sitepadrekelmon.vercel.app'
 app.use(cors({origin:true}))
-app.use((req,res,next)=>{const o=req.headers.origin||FRONT_ORIGIN||'*';res.header('Access-Control-Allow-Origin',o);res.header('Vary','Origin');res.header('Access-Control-Allow-Methods','GET,POST,PATCH,DELETE,PUT,OPTIONS');res.header('Access-Control-Allow-Headers','Content-Type, Authorization, authorization, X-Requested-With, Accept, Origin');res.header('Access-Control-Max-Age','600');if(req.method==='OPTIONS'){return res.status(204).end()}next()})
+app.use((req,res,next)=>{res.header('Access-Control-Allow-Origin','*');res.header('Access-Control-Allow-Methods','GET,POST,PATCH,DELETE,PUT,OPTIONS');res.header('Access-Control-Allow-Headers','Content-Type, Authorization, authorization, X-Requested-With, Accept, Origin');res.header('Access-Control-Max-Age','600');if(req.method==='OPTIONS'){return res.status(204).end()}next()})
 app.use(helmet())
 app.use(helmet.contentSecurityPolicy({
   useDefaults:true,
@@ -20,15 +22,16 @@ app.use(helmet.contentSecurityPolicy({
     defaultSrc:["'self'"],
     scriptSrc:["'self'","'unsafe-inline'","https://vercel.live","https://*.vercel.live"],
     scriptSrcElem:["'self'","'unsafe-inline'","https://vercel.live","https://*.vercel.live"],
-    connectSrc:["'self'","https://vercel.live","https://*.vercel.live","wss://*.vercel.live"],
+    connectSrc:["'self'","https://vercel.live","https://*.vercel.live","wss://*.vercel.live","http://127.0.0.1:4000","https://backend-sitepadrekelmon.vercel.app","https://*.supabase.co"],
     imgSrc:["'self'","data:","blob:","https:"],
-    styleSrc:["'self'","'unsafe-inline'"],
-    fontSrc:["'self'","data:"],
+    styleSrc:["'self'","'unsafe-inline'","https://fonts.googleapis.com"],
+    fontSrc:["'self'","data:","https://fonts.gstatic.com"],
     frameSrc:["'self'","https://www.youtube.com","https://www.youtube-nocookie.com"]
   }
 }))
 app.use(express.json({limit:'2mb'}))
 app.use(morgan('tiny'))
+app.use((req,res,next)=>{res.setHeader('Permissions-Policy','accelerometer=*, autoplay=*, clipboard-write=*, encrypted-media=*, gyroscope=*, magnetometer=*, microphone=*, camera=*, fullscreen=*; compute-pressure=*');next()})
 
 app.post('/api/volunteers',async(req,res)=>{const {name,email,city,message,source_utm}=req.body||{};if(!requireFields([name,email]))return res.status(400).json({error:'dados_invalidos'});if(!validateEmail(email))return res.status(400).json({error:'email_invalido'});const {error}=await supabase.from('volunteers').insert([{name,email,city,message,source_utm}]);if(error)return res.status(500).json({error:error.message});res.json({ok:true})})
 app.post('/api/contacts',async(req,res)=>{const {name,email,subject,message,source_utm}=req.body||{};if(!requireFields([name,email,message]))return res.status(400).json({error:'dados_invalidos'});if(!validateEmail(email))return res.status(400).json({error:'email_invalido'});const {error}=await supabase.from('contacts').insert([{name,email,subject,message,source_utm}]);if(error)return res.status(500).json({error:error.message});res.json({ok:true})})
@@ -38,7 +41,11 @@ app.get('/api/events',async(req,res)=>{const {data,error}=await supabase.from('e
 app.get('/api/gallery',async(req,res)=>{const {data:items,error}=await supabase.from('gallery_items').select('*').eq('published',true).order('position');if(error)return res.status(500).json({error:error.message});const ids=[...new Set(items.map(i=>i.media_id))];const {data:med,error:err2}=await supabase.from('media').select('*').in('id',ids);if(err2)return res.status(500).json({error:err2.message});const map=new Map(med.map(m=>[m.id,m]));const out=items.map(i=>({id:i.id,category:i.category,position:i.position,media:map.get(i.media_id)}));res.json(out)})
 app.get('/api/settings',async(req,res)=>{const {data,error}=await supabase.from('settings').select('*');if(error)return res.status(500).json({error:error.message});res.json(data||[])})
 app.post('/api/admin/media',adminAuth,async(req,res)=>{const {type,title,alt_text,url,category,published=true}=req.body||{};if(!requireFields([type,url]))return res.status(400).json({error:'dados_invalidos'});const {data,error}=await supabase.from('media').insert([{type,title,alt_text,url,category,published}]).select().single();if(error)return res.status(500).json({error:error.message});res.json(data)})
+app.get('/api/admin/media',adminAuth,async(req,res)=>{const {data,error}=await supabase.from('media').select('*').order('created_at',{ascending:false});if(error)return res.status(500).json({error:error.message});res.json(data||[])})
+app.patch('/api/admin/media/:id',adminAuth,async(req,res)=>{const {id}=req.params;const {data,error}=await supabase.from('media').update(req.body).eq('id',id).select().single();if(error)return res.status(500).json({error:error.message});res.json(data)})
+app.delete('/api/admin/media/:id',adminAuth,async(req,res)=>{const {id}=req.params;try{await supabase.from('gallery_items').delete().eq('media_id',id)}catch{}const {error}=await supabase.from('media').delete().eq('id',id);if(error)return res.status(500).json({error:error.message});res.json({ok:true})})
 app.post('/api/admin/gallery-items',adminAuth,async(req,res)=>{const {media_id,category,position=0,published=true}=req.body||{};if(!requireFields([media_id,category]))return res.status(400).json({error:'dados_invalidos'});const {data,error}=await supabase.from('gallery_items').insert([{media_id,category,position,published}]).select().single();if(error)return res.status(500).json({error:error.message});res.json(data)})
+app.get('/api/admin/gallery-items',adminAuth,async(req,res)=>{const {data:items,error}=await supabase.from('gallery_items').select('*').order('position');if(error)return res.status(500).json({error:error.message});const ids=[...new Set(items.map(i=>i.media_id))];const {data:med,error:err2}=await supabase.from('media').select('*').in('id',ids);if(err2)return res.status(500).json({error:err2.message});const map=new Map(med.map(m=>[m.id,m]));const out=items.map(i=>({id:i.id,category:i.category,position:i.position,published:i.published,media_id:i.media_id,media:map.get(i.media_id)}));res.json(out)})
 app.patch('/api/admin/gallery-items/:id',adminAuth,async(req,res)=>{const {id}=req.params;const {data,error}=await supabase.from('gallery_items').update(req.body).eq('id',id).select().single();if(error)return res.status(500).json({error:error.message});res.json(data)})
 app.post('/api/admin/posts',adminAuth,async(req,res)=>{const {slug,title,excerpt,content,status='draft',published_at=null,cover_media_id=null}=req.body||{};if(!requireFields([slug,title,content]))return res.status(400).json({error:'dados_invalidos'});const {data,error}=await supabase.from('posts').insert([{slug,title,excerpt,content,status,published_at,cover_media_id}]).select().single();if(error)return res.status(500).json({error:error.message});res.json(data)})
 app.patch('/api/admin/posts/:id',adminAuth,async(req,res)=>{const {id}=req.params;const {data,error}=await supabase.from('posts').update(req.body).eq('id',id).select().single();if(error)return res.status(500).json({error:error.message});res.json(data)})
@@ -54,6 +61,10 @@ app.put('/api/admin/settings',adminAuth,async(req,res)=>{const {key,value}=req.b
   ;({data,error}=await supabase.from('settings').insert([{key,value:val}]).select().single())
   if(error)return res.status(500).json({error:error.message});res.json(data)
 })
+app.get('/api/admin/volunteers',adminAuth,async(req,res)=>{const {data,error}=await supabase.from('volunteers').select('*').order('created_at',{ascending:false});if(error)return res.status(500).json({error:error.message});res.json(data||[])})
+app.patch('/api/admin/volunteers/:id',adminAuth,async(req,res)=>{const {id}=req.params;const {data,error}=await supabase.from('volunteers').update(req.body).eq('id',id).select().single();if(error)return res.status(500).json({error:error.message});res.json(data)})
+app.get('/api/admin/contacts',adminAuth,async(req,res)=>{const {data,error}=await supabase.from('contacts').select('*').order('created_at',{ascending:false});if(error)return res.status(500).json({error:error.message});res.json(data||[])})
+app.patch('/api/admin/contacts/:id',adminAuth,async(req,res)=>{const {id}=req.params;const {data,error}=await supabase.from('contacts').update(req.body).eq('id',id).select().single();if(error)return res.status(500).json({error:error.message});res.json(data)})
 app.delete('/api/admin/gallery-items/:id',adminAuth,async(req,res)=>{const {id}=req.params;const {error}=await supabase.from('gallery_items').delete().eq('id',id);if(error)return res.status(500).json({error:error.message});res.json({ok:true})})
 app.post('/api/assistant',async(req,res)=>{try{const {text,session_id}=req.body||{};if(!text)return res.status(400).json({error:'texto_vazio'});const {data:settings}=await supabase.from('settings').select('*');const map=new Map((settings||[]).map(s=>[s.key,s.value]));let system=map.get('chat_system_prompt')||'Responda em português de forma direta e objetiva à pergunta do usuário antes de qualquer saudação. Mantenha um tom pastoral e patriótico, mas sem floreios. Use até 2 parágrafos. Se não souber ou não puder confirmar (por exemplo, sobre candidatura), diga isso claramente e oriente a acompanhar canais oficiais. Ofereça ajuda adicional no final, com uma única frase breve.';if(system&&typeof system!=='string'){system=system.prompt||'Responda em português de forma direta e objetiva à pergunta do usuário antes de qualquer saudação. Mantenha um tom pastoral e patriótico, mas sem floreios. Use até 2 parágrafos. Se não souber ou não puder confirmar (por exemplo, sobre candidatura), diga isso claramente e oriente a acompanhar canais oficiais. Ofereça ajuda adicional no final, com uma única frase breve.'};const sid=session_id||`sess-${Date.now()}`;try{await supabase.from('chat_messages').insert([{session_id:sid,role:'user',message:text,model:'user'}])}catch{}
   let history=sessions.get(sid)||[];history=[...history,{role:'user',content:text}];sessions.set(sid,history.slice(-6))
@@ -84,6 +95,10 @@ app.get('/',(req,res)=>{
       'POST /api/volunteers',
       'POST /api/contacts',
       'POST /api/assistant',
+      'GET /api/admin/volunteers',
+      'PATCH /api/admin/volunteers/:id',
+      'GET /api/admin/contacts',
+      'PATCH /api/admin/contacts/:id',
       'GET /api/admin/events',
       'POST /api/admin/events',
       'PATCH /api/admin/events/:id',
@@ -100,3 +115,6 @@ app.get('/',(req,res)=>{
     ]
   })
 })
+const __dirname=fileURLToPath(new URL('.',import.meta.url))
+const rootPath=path.resolve(__dirname,'..')
+app.use(express.static(rootPath))
